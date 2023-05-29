@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+  labels:
+    app: webapp-pod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp-pod
+  template:
+    metadata:
+      labels:
+        app: webapp-pod
+    spec:
+      containers:
+        - name: webapp-pod
+          image: nanajanashia/k8s-demo-app:v1.0
+          ports:
+            - containerPort: 3000
+          env:
+          - name: USER_NAME
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-secret
+                key: mongodb-username
+          - name: USER_PWD
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-secret
+                key: mongodb-password 
+          - name: DB_URL
+            valueFrom:
+              configMapKeyRef:
+                name: mongodb-config
+                key: mongodb-service
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-service
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: webapp-pod
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+      nodePort: 30300
